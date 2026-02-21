@@ -195,98 +195,6 @@
             color: #999;
         }
         
-        /* Custom Modal */
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.7);
-            z-index: 9999;
-            justify-content: center;
-            align-items: center;
-        }
-        
-        .modal-overlay.show {
-            display: flex;
-        }
-        
-        .modal-content {
-            background: white;
-            border-radius: 16px;
-            padding: 30px;
-            max-width: 500px;
-            width: 90%;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-        }
-        
-        .modal-header {
-            font-size: 22px;
-            font-weight: 700;
-            color: #667eea;
-            margin-bottom: 20px;
-        }
-        
-        .modal-message {
-            background: #f9fafb;
-            padding: 20px;
-            border-radius: 8px;
-            white-space: pre-wrap;
-            font-family: monospace;
-            font-size: 13px;
-            max-height: 300px;
-            overflow-y: auto;
-            margin-bottom: 20px;
-            border: 2px solid #e0e0e0;
-        }
-        
-        .modal-buttons {
-            display: flex;
-            gap: 12px;
-        }
-        
-        .modal-btn {
-            flex: 1;
-            padding: 12px;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        
-        .modal-btn-copy {
-            background: #667eea;
-            color: white;
-        }
-        
-        .modal-btn-copy:hover {
-            background: #5568d3;
-            transform: translateY(-2px);
-        }
-        
-        .modal-btn-save {
-            background: #10b981;
-            color: white;
-        }
-        
-        .modal-btn-save:hover {
-            background: #059669;
-            transform: translateY(-2px);
-        }
-        
-        .modal-btn-cancel {
-            background: #e5e7eb;
-            color: #333;
-        }
-        
-        .modal-btn-cancel:hover {
-            background: #d1d5db;
-        }
-        
         .success-message {
             background: #10b981;
             color: white;
@@ -389,19 +297,6 @@
             <h2 class="history-title">Today's Entries</h2>
             <div class="history-grid" id="historyContainer">
                 <div class="no-history">No entries yet for today</div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Custom Modal -->
-    <div class="modal-overlay" id="slackModal">
-        <div class="modal-content">
-            <div class="modal-header">📊 Report Preview</div>
-            <div class="modal-message" id="modalMessage"></div>
-            <div class="modal-buttons">
-                <button class="modal-btn modal-btn-copy" onclick="copySlackMessage()">📋 Copy</button>
-                <button class="modal-btn modal-btn-save" onclick="confirmSave()">✓ Save</button>
-                <button class="modal-btn modal-btn-cancel" onclick="cancelSave()">✗ Cancel</button>
             </div>
         </div>
     </div>
@@ -545,26 +440,21 @@
                     return;
                 }
                 
-                // Sort entries by timestamp to get most recent
-                entries.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-                
-                // Use the most recent entry as the total for the day
-                const latestEntry = entries[0];
-                const totalSales = parseFloat(latestEntry.grossSales || 0);
-                const totalLabor = parseFloat(latestEntry.laborDollars || 0);
+                // Calculate combined totals
+                const totalSales = entries.reduce((sum, e) => sum + parseFloat(e.grossSales || 0), 0);
+                const totalLabor = entries.reduce((sum, e) => sum + parseFloat(e.laborDollars || 0), 0);
                 const combinedPercentage = totalSales > 0 ? ((totalLabor / totalSales) * 100).toFixed(1) : '0.0';
                 
-                // Build HTML with latest total at top
+                // Build HTML with combined total at top
                 let html = '';
                 
-                // Add latest total card
-                if (selectedStore && entries.length > 0) {
-                    const checkTimeLabel = latestEntry.checkTime || 'Latest';
+                // Add combined total card
+                if (selectedStore && entries.length > 1) {
                     const percentageClass = parseFloat(combinedPercentage) > 35 ? 'danger' : 
                                           parseFloat(combinedPercentage) > 30 ? 'warning' : 'good';
                     html += `
                         <div class="history-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; margin-bottom: 20px;">
-                            <div style="font-size: 18px; font-weight: 700; margin-bottom: 16px;">📊 Today's Total (${checkTimeLabel})</div>
+                            <div style="font-size: 18px; font-weight: 700; margin-bottom: 16px;">📊 Today's Combined Total</div>
                             <div class="history-details">
                                 <div class="history-detail">
                                     <span class="history-label" style="color: rgba(255,255,255,0.9);">Total Sales</span>
@@ -575,7 +465,7 @@
                                     <span class="history-value" style="color: white; font-size: 18px;">$${totalLabor.toFixed(2)}</span>
                                 </div>
                                 <div class="history-detail">
-                                    <span class="history-label" style="color: rgba(255,255,255,0.9);">Labor %</span>
+                                    <span class="history-label" style="color: rgba(255,255,255,0.9);">Combined Labor %</span>
                                     <span class="history-value" style="color: white; font-size: 20px; font-weight: 800;">${combinedPercentage}%</span>
                                 </div>
                             </div>
@@ -626,6 +516,7 @@
         // Form submission
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
+            console.log('Form submitted!');
             
             const sales = parseFloat(grossSalesInput.value);
             const labor = parseFloat(laborDollarsInput.value);
@@ -641,109 +532,12 @@
                 date: getTodayDateString()
             };
             
-            // Show report preview modal
-            const storeCode = entry.store.split(' - ')[0];
-            const storeName = entry.store.split(' - ')[1] || entry.store;
-            
-            // Calculate last year same day of week (364 days = 52 weeks exactly)
-            const today = new Date(entry.date + 'T12:00:00'); // Add time to avoid timezone issues
-            const lastYear = new Date(today.getTime() - (364 * 24 * 60 * 60 * 1000)); // 364 days in milliseconds
-            const lastYearDate = lastYear.toISOString().split('T')[0];
-            
-            console.log(`Today: ${entry.date} (${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][today.getDay()]}), LY: ${lastYearDate} (${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][lastYear.getDay()]})`);
-            
-            let lySales = 0;
-            let laborBudget = 0.25;
-            let closingHour = 22;
+            console.log('Entry to save:', entry);
             
             try {
-                console.log(`Querying Firebase: store_code="${storeCode}", date="${lastYearDate}"`);
-                const lySalesQuery = await db.collection('last_year_sales')
-                    .where('store_code', '==', storeCode)
-                    .where('date', '==', lastYearDate)
-                    .limit(1)
-                    .get();
-                
-                console.log(`Firebase returned ${lySalesQuery.size} results`);
-                
-                if (!lySalesQuery.empty) {
-                    const doc = lySalesQuery.docs[0];
-                    lySales = parseFloat(doc.data().sales);
-                    console.log(`Found LY sales: $${lySales} for date ${doc.data().date}`);
-                } else {
-                    console.log(`No LY sales found for ${storeCode} on ${lastYearDate}`);
-                }
-                
-                const budgetQuery = await db.collection('labor_budgets')
-                    .where('store_code', '==', storeCode)
-                    .limit(1)
-                    .get();
-                if (!budgetQuery.empty) {
-                    laborBudget = budgetQuery.docs[0].data().budget_percentage;
-                }
-                
-                const settingsQuery = await db.collection('store_settings')
-                    .where('store_code', '==', storeCode)
-                    .limit(1)
-                    .get();
-                if (!settingsQuery.empty) {
-                    closingHour = settingsQuery.docs[0].data().closing_hour;
-                }
-            } catch (err) {
-                console.warn('Firebase query error:', err);
-            }
-            
-            const lyDifference = lySales - sales;
-            const hour = new Date().getHours();
-            const hoursRemaining = Math.max(closingHour - hour, 0);
-            const dollarsPerHour = lyDifference > 0 && hoursRemaining > 0 ? (lyDifference / hoursRemaining).toFixed(0) : 0;
-            const laborVariance = ((percentage / 100) - laborBudget) * 100;
-            
-            let slackMessage = `📊 ${storeName} - ${entry.checkTime} Report\n\n`;
-            slackMessage += `💰 Sales: $${sales.toLocaleString()}\n`;
-            slackMessage += `👥 Labor: ${percentage}%`;
-            if (laborVariance > 1) {
-                slackMessage += ` ⚠️ (${laborVariance.toFixed(1)}% over)`;
-            } else if (laborVariance < -1) {
-                slackMessage += ` ✅ (${Math.abs(laborVariance).toFixed(1)}% under)`;
-            }
-            slackMessage += `\n📈 Last Year: $${lySales.toLocaleString()}\n`;
-            if (sales >= lySales) {
-                slackMessage += `✅ Beating LY by $${(sales - lySales).toLocaleString()}!`;
-            } else if (lyDifference > 0) {
-                slackMessage += `🎯 Need $${lyDifference.toLocaleString()} more\n💵 $${dollarsPerHour}/hr for ${hoursRemaining} hrs`;
-            }
-            
-            // Show custom modal
-            window.pendingEntry = entry;
-            window.slackMessageText = slackMessage;
-            document.getElementById('modalMessage').textContent = slackMessage;
-            document.getElementById('slackModal').classList.add('show');
-        });
-        
-        // Modal functions
-        function copySlackMessage() {
-            navigator.clipboard.writeText(window.slackMessageText).then(() => {
-                const btn = event.target;
-                const originalText = btn.textContent;
-                btn.textContent = '✓ Copied!';
-                setTimeout(() => btn.textContent = originalText, 2000);
-            });
-        }
-        
-        function confirmSave() {
-            document.getElementById('slackModal').classList.remove('show');
-            saveEntry(window.pendingEntry);
-        }
-        
-        function cancelSave() {
-            document.getElementById('slackModal').classList.remove('show');
-            window.pendingEntry = null;
-        }
-        
-        async function saveEntry(entry) {
-            try {
+                console.log('Attempting to save to Firestore...');
                 await db.collection('labor_entries').add(entry);
+                console.log('Save successful!');
                 
                 successMessage.classList.add('show');
                 setTimeout(() => {
