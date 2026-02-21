@@ -732,6 +732,29 @@
             try {
                 await db.collection('labor_entries').add(entry);
                 
+                // Send to Make.com webhook for Slack notification
+                try {
+                    await fetch('https://hook.us2.make.com/ab4eixtrt8j5did85xm1act5jutfefmd', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            location: entry.store.split(' - ')[1],
+                            sales: parseFloat(entry.grossSales),
+                            labor_pct: parseFloat(entry.percentage),
+                            check_time: entry.checkTime,
+                            date: entry.date,
+                            district: 'Benedict',
+                            report_text: window.reportMessageText
+                        })
+                    });
+                    console.log('Data sent to Make.com webhook');
+                } catch (webhookError) {
+                    console.error('Webhook error (non-blocking):', webhookError);
+                    // Continue even if webhook fails
+                }
+                
                 successMessage.classList.add('show');
                 setTimeout(() => {
                     successMessage.classList.remove('show');
