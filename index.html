@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Labor Percentage Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+        
+        .form-section {
+            padding: 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 24px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+        
+        select, input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s;
+            background: white;
+        }
+        
+        select:focus, input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        input[type="number"] {
+            font-family: 'Courier New', monospace;
+        }
+        
+        .calculated {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 24px 0;
+            text-align: center;
+        }
+        
+        .calculated label {
+            margin-bottom: 8px;
+            color: #666;
+        }
+        
+        .percentage-display {
+            font-size: 48px;
+            font-weight: 700;
+            color: #667eea;
+            margin-top: 8px;
+        }
+        
+        .percentage-display.warning {
+            color: #f59e0b;
+        }
+        
+        .percentage-display.danger {
+            color: #ef4444;
+        }
+        
+        button {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .history-section {
+            padding: 0 30px 30px;
+        }
+        
+        .history-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: #333;
+        }
+        
+        .history-grid {
+            display: grid;
+            gap: 12px;
+        }
+        
+        .history-card {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 16px;
+            border-radius: 8px;
+        }
+        
+        .history-time {
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+        
+        .history-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+            font-size: 14px;
+        }
+        
+        .history-detail {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .history-label {
+            color: #666;
+            font-size: 12px;
+            margin-bottom: 4px;
+        }
+        
+        .history-value {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .no-history {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+        
+        /* Custom Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-overlay.show {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+        
+        .modal-header {
+            font-size: 22px;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+        
+        .modal-message {
+            background: #f9fafb;
+            padding: 20px;
+            border-radius: 8px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 13px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            border: 2px solid #e0e0e0;
+        }
+        
+        .modal-buttons {
+            display: flex;
+            gap: 12px;
+        }
+        
+        .modal-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .modal-btn-copy {
+            background: #667eea;
+            color: white;
+        }
+        
+        .modal-btn-copy:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+        
+        .modal-btn-save {
+            background: #10b981;
+            color: white;
+        }
+        
+        .modal-btn-save:hover {
+            background: #059669;
+            transform: translateY(-2px);
+        }
+        
+        .modal-btn-cancel {
+            background: #e5e7eb;
+            color: #333;
+        }
+        
+        .modal-btn-cancel:hover {
+            background: #d1d5db;
+        }
+        
+        .success-message {
+            background: #10b981;
+            color: white;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 600;
+            display: none;
+        }
+        
+        .success-message.show {
+            display: block;
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @media (max-width: 640px) {
+            .header h1 {
+                font-size: 24px;
+            }
+            
+            .percentage-display {
+                font-size: 36px;
+            }
+            
+            .history-details {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Labor Tracker</h1>
+            <p id="current-date"></p>
+        </div>
+        
+        <div class="form-section">
+            <div class="success-message" id="successMessage">
+                ✓ Entry saved successfully!
+            </div>
+            
+            <form id="laborForm">
+                <div class="form-group">
+                    <label for="storeSelect">Store Location</label>
+                    <select id="storeSelect" required>
+                        <option value="">Select a store...</option>
+                        <optgroup label="Benedict District">
+                            <option value="2444 - Richmond">2444 - Richmond</option>
+                            <option value="2524 - Palomar">2524 - Palomar</option>
+                            <option value="2842 - Georgetown">2842 - Georgetown</option>
+                            <option value="3286 - Danville">3286 - Danville</option>
+                        </optgroup>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Auto-Assigned Check Time</label>
+                    <div style="padding: 12px 16px; background: #f0f4ff; border: 2px solid #667eea; border-radius: 8px; color: #667eea; font-weight: 600; font-size: 18px;" id="autoCheckTime">
+                        --
+                    </div>
+                    <div style="font-size: 12px; color: #666; margin-top: 6px;">
+                        Based on current time
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="grossSales">Gross Sales ($)</label>
+                    <input type="number" id="grossSales" step="0.01" min="0" required placeholder="0.00">
+                </div>
+                
+                <div class="form-group">
+                    <label for="laborDollars">Labor Dollars ($)</label>
+                    <input type="number" id="laborDollars" step="0.01" min="0" required placeholder="0.00">
+                </div>
+                
+                <div class="calculated">
+                    <label>Gross Labor Percentage</label>
+                    <div class="percentage-display" id="percentage">0.0%</div>
+                </div>
+                
+                <button type="submit">Save Entry</button>
+            </form>
+        </div>
+        
+        <div class="history-section">
+            <h2 class="history-title">Today's Entries</h2>
+            <div class="history-grid" id="historyContainer">
+                <div class="no-history">No entries yet for today</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Custom Modal -->
+    <div class="modal-overlay" id="slackModal">
+        <div class="modal-content">
+            <div class="modal-header">📊 Report Preview</div>
+            <div class="modal-message" id="modalMessage"></div>
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-copy" onclick="copySlackMessage()">📋 Copy</button>
+                <button class="modal-btn modal-btn-save" onclick="confirmSave()">✓ Save</button>
+                <button class="modal-btn modal-btn-cancel" onclick="cancelSave()">✗ Cancel</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Firebase SDK -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.7.1/firebase-app-compat.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.7.1/firebase-firestore-compat.min.js"></script>
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCg6sdwxr788HymNLHF3skIro7P6SWrvHE",
+            authDomain: "labor-tracker-bbbaa.firebaseapp.com",
+            projectId: "labor-tracker-bbbaa",
+            storageBucket: "labor-tracker-bbbaa.firebasestorage.app",
+            messagingSenderId: "939951401620",
+            appId: "1:939951401620:web:f2cd20c38c8e36a5466281"
+        };
+
+        // Initialize Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        
+        // Display current date
+        const dateElement = document.getElementById('current-date');
+        const today = new Date();
+        dateElement.textContent = today.toLocaleDateString('en-US', { 
+            weekday: 'long', 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+        });
+        
+        // Form elements
+        const form = document.getElementById('laborForm');
+        const storeSelect = document.getElementById('storeSelect');
+        const grossSalesInput = document.getElementById('grossSales');
+        const laborDollarsInput = document.getElementById('laborDollars');
+        const percentageDisplay = document.getElementById('percentage');
+        const successMessage = document.getElementById('successMessage');
+        const historyContainer = document.getElementById('historyContainer');
+        
+        // Function to get auto-assigned check time based on current hour
+        function getAutoCheckTime() {
+            const now = new Date();
+            const hour = now.getHours();
+            const minute = now.getMinutes();
+            const totalMinutes = hour * 60 + minute;
+            
+            // Before 2:30pm (14:30) = 1pm
+            if (totalMinutes < 14 * 60 + 30) {
+                return '1pm';
+            }
+            // 2:30pm - 5:30pm (14:30 - 17:30) = 4pm
+            else if (totalMinutes < 17 * 60 + 30) {
+                return '4pm';
+            }
+            // 5:30pm - 8:30pm (17:30 - 20:30) = 7pm
+            else if (totalMinutes < 20 * 60 + 30) {
+                return '7pm';
+            }
+            // After 8:30pm = Close
+            else {
+                return 'Close';
+            }
+        }
+        
+        // Update auto check time display
+        function updateAutoCheckTimeDisplay() {
+            const autoCheckTime = getAutoCheckTime();
+            document.getElementById('autoCheckTime').textContent = autoCheckTime;
+        }
+        
+        // Update the display immediately and every minute
+        updateAutoCheckTimeDisplay();
+        setInterval(updateAutoCheckTimeDisplay, 60000);
+        
+        // Calculate percentage on input
+        function calculatePercentage() {
+            const sales = parseFloat(grossSalesInput.value) || 0;
+            const labor = parseFloat(laborDollarsInput.value) || 0;
+            
+            if (sales > 0) {
+                const percentage = (labor / sales) * 100;
+                percentageDisplay.textContent = percentage.toFixed(1) + '%';
+                
+                percentageDisplay.classList.remove('warning', 'danger');
+                if (percentage > 35) {
+                    percentageDisplay.classList.add('danger');
+                } else if (percentage > 30) {
+                    percentageDisplay.classList.add('warning');
+                }
+            } else {
+                percentageDisplay.textContent = '0.0%';
+                percentageDisplay.classList.remove('warning', 'danger');
+            }
+        }
+        
+        grossSalesInput.addEventListener('input', calculatePercentage);
+        laborDollarsInput.addEventListener('input', calculatePercentage);
+        
+        // Get today's date string
+        function getTodayDateString() {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+        
+        // Load entries for today
+        async function loadTodaysEntries() {
+            try {
+                const todayDate = getTodayDateString();
+                const selectedStore = storeSelect.value;
+                
+                let q = db.collection('labor_entries')
+                    .where('date', '==', todayDate);
+                
+                const querySnapshot = await q.get();
+                let entries = [];
+                querySnapshot.forEach((doc) => {
+                    entries.push(doc.data());
+                });
+                
+                // Filter by selected store if one is selected
+                if (selectedStore) {
+                    entries = entries.filter(entry => {
+                        // Handle both old format (store) and new format (stores array)
+                        if (entry.stores && Array.isArray(entry.stores)) {
+                            return entry.stores.includes(selectedStore);
+                        } else if (entry.store) {
+                            return entry.store === selectedStore;
+                        }
+                        return false;
+                    });
+                }
+                
+                if (entries.length === 0) {
+                    const message = selectedStore ? `No entries yet for ${selectedStore} today` : 'No entries yet for today';
+                    historyContainer.innerHTML = `<div class="no-history">${message}</div>`;
+                    return;
+                }
+                
+                // Sort entries by timestamp to get most recent
+                entries.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                
+                // Use the most recent entry as the total for the day
+                const latestEntry = entries[0];
+                const totalSales = parseFloat(latestEntry.grossSales || 0);
+                const totalLabor = parseFloat(latestEntry.laborDollars || 0);
+                const combinedPercentage = totalSales > 0 ? ((totalLabor / totalSales) * 100).toFixed(1) : '0.0';
+                
+                // Build HTML with latest total at top
+                let html = '';
+                
+                // Add latest total card
+                if (selectedStore && entries.length > 0) {
+                    const checkTimeLabel = latestEntry.checkTime || 'Latest';
+                    const percentageClass = parseFloat(combinedPercentage) > 35 ? 'danger' : 
+                                          parseFloat(combinedPercentage) > 30 ? 'warning' : 'good';
+                    html += `
+                        <div class="history-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; margin-bottom: 20px;">
+                            <div style="font-size: 18px; font-weight: 700; margin-bottom: 16px;">📊 Today's Total (${checkTimeLabel})</div>
+                            <div class="history-details">
+                                <div class="history-detail">
+                                    <span class="history-label" style="color: rgba(255,255,255,0.9);">Total Sales</span>
+                                    <span class="history-value" style="color: white; font-size: 18px;">$${totalSales.toFixed(2)}</span>
+                                </div>
+                                <div class="history-detail">
+                                    <span class="history-label" style="color: rgba(255,255,255,0.9);">Total Labor</span>
+                                    <span class="history-value" style="color: white; font-size: 18px;">$${totalLabor.toFixed(2)}</span>
+                                </div>
+                                <div class="history-detail">
+                                    <span class="history-label" style="color: rgba(255,255,255,0.9);">Labor %</span>
+                                    <span class="history-value" style="color: white; font-size: 20px; font-weight: 800;">${combinedPercentage}%</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                // Add individual entries
+                html += entries
+                    .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+                    .map(entry => {
+                        const time = new Date(entry.timestamp).toLocaleTimeString('en-US', {
+                            hour: 'numeric',
+                            minute: '2-digit'
+                        });
+                        
+                        return `
+                            <div class="history-card">
+                                <div class="history-time">${entry.checkTime} Check - ${time}</div>
+                                <div class="history-details">
+                                    <div class="history-detail">
+                                        <span class="history-label">Gross Sales</span>
+                                        <span class="history-value">$${parseFloat(entry.grossSales).toFixed(2)}</span>
+                                    </div>
+                                    <div class="history-detail">
+                                        <span class="history-label">Labor</span>
+                                        <span class="history-value">$${parseFloat(entry.laborDollars).toFixed(2)}</span>
+                                    </div>
+                                    <div class="history-detail">
+                                        <span class="history-label">Labor %</span>
+                                        <span class="history-value">${entry.percentage}%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                
+                historyContainer.innerHTML = html;
+            } catch (error) {
+                console.error('Error loading entries:', error);
+                historyContainer.innerHTML = '<div class="no-history">Error loading entries. Please refresh.</div>';
+            }
+        }
+        
+        // Update history when store selection changes
+        storeSelect.addEventListener('change', loadTodaysEntries);
+        
+        // Form submission
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const sales = parseFloat(grossSalesInput.value);
+            const labor = parseFloat(laborDollarsInput.value);
+            const percentage = ((labor / sales) * 100).toFixed(1);
+            
+            const entry = {
+                store: storeSelect.value,
+                checkTime: getAutoCheckTime(),
+                grossSales: sales,
+                laborDollars: labor,
+                percentage: percentage,
+                timestamp: new Date().toISOString(),
+                date: getTodayDateString()
+            };
+            
+            // Show report preview modal
+            const storeCode = entry.store.split(' - ')[0];
+            const storeName = entry.store.split(' - ')[1] || entry.store;
+            
+            // Calculate last year same day of week (364 days = 52 weeks exactly)
+            const today = new Date(entry.date + 'T12:00:00'); // Add time to avoid timezone issues
+            const lastYear = new Date(today.getTime() - (364 * 24 * 60 * 60 * 1000)); // 364 days in milliseconds
+            const lastYearDate = lastYear.toISOString().split('T')[0];
+            
+            console.log(`Today: ${entry.date} (${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][today.getDay()]}), LY: ${lastYearDate} (${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][lastYear.getDay()]})`);
+            
+            let lySales = 0;
+            let laborBudget = 0.25;
+            let closingHour = 22;
+            
+            try {
+                console.log(`Querying Firebase: store_code="${storeCode}", date="${lastYearDate}"`);
+                const lySalesQuery = await db.collection('last_year_sales')
+                    .where('store_code', '==', storeCode)
+                    .where('date', '==', lastYearDate)
+                    .limit(1)
+                    .get();
+                
+                console.log(`Firebase returned ${lySalesQuery.size} results`);
+                
+                if (!lySalesQuery.empty) {
+                    const doc = lySalesQuery.docs[0];
+                    lySales = parseFloat(doc.data().sales);
+                    console.log(`Found LY sales: $${lySales} for date ${doc.data().date}`);
+                } else {
+                    console.log(`No LY sales found for ${storeCode} on ${lastYearDate}`);
+                }
+                
+                const budgetQuery = await db.collection('labor_budgets')
+                    .where('store_code', '==', storeCode)
+                    .limit(1)
+                    .get();
+                if (!budgetQuery.empty) {
+                    laborBudget = budgetQuery.docs[0].data().budget_percentage;
+                }
+                
+                const settingsQuery = await db.collection('store_settings')
+                    .where('store_code', '==', storeCode)
+                    .limit(1)
+                    .get();
+                if (!settingsQuery.empty) {
+                    closingHour = settingsQuery.docs[0].data().closing_hour;
+                }
+            } catch (err) {
+                console.warn('Firebase query error:', err);
+            }
+            
+            const lyDifference = lySales - sales;
+            const hour = new Date().getHours();
+            const hoursRemaining = Math.max(closingHour - hour, 0);
+            const dollarsPerHour = lyDifference > 0 && hoursRemaining > 0 ? (lyDifference / hoursRemaining).toFixed(0) : 0;
+            const laborVariance = ((percentage / 100) - laborBudget) * 100;
+            
+            let slackMessage = `📊 ${storeName} - ${entry.checkTime} Report\n\n`;
+            slackMessage += `💰 Sales: $${sales.toLocaleString()}\n`;
+            slackMessage += `👥 Labor: ${percentage}%`;
+            if (laborVariance > 1) {
+                slackMessage += ` ⚠️ (${laborVariance.toFixed(1)}% over)`;
+            } else if (laborVariance < -1) {
+                slackMessage += ` ✅ (${Math.abs(laborVariance).toFixed(1)}% under)`;
+            }
+            slackMessage += `\n📈 Last Year: $${lySales.toLocaleString()}\n`;
+            if (sales >= lySales) {
+                slackMessage += `✅ Beating LY by $${(sales - lySales).toLocaleString()}!`;
+            } else if (lyDifference > 0) {
+                slackMessage += `🎯 Need $${lyDifference.toLocaleString()} more\n💵 $${dollarsPerHour}/hr for ${hoursRemaining} hrs`;
+            }
+            
+            // Show custom modal
+            window.pendingEntry = entry;
+            window.slackMessageText = slackMessage;
+            document.getElementById('modalMessage').textContent = slackMessage;
+            document.getElementById('slackModal').classList.add('show');
+        });
+        
+        // Modal functions
+        function copySlackMessage() {
+            navigator.clipboard.writeText(window.slackMessageText).then(() => {
+                const btn = event.target;
+                const originalText = btn.textContent;
+                btn.textContent = '✓ Copied!';
+                setTimeout(() => btn.textContent = originalText, 2000);
+            });
+        }
+        
+        function confirmSave() {
+            document.getElementById('slackModal').classList.remove('show');
+            saveEntry(window.pendingEntry);
+        }
+        
+        function cancelSave() {
+            document.getElementById('slackModal').classList.remove('show');
+            window.pendingEntry = null;
+        }
+        
+        async function saveEntry(entry) {
+            try {
+                await db.collection('labor_entries').add(entry);
+                
+                successMessage.classList.add('show');
+                setTimeout(() => {
+                    successMessage.classList.remove('show');
+                }, 3000);
+                
+                grossSalesInput.value = '';
+                laborDollarsInput.value = '';
+                percentageDisplay.textContent = '0.0%';
+                percentageDisplay.classList.remove('warning', 'danger');
+                
+                loadTodaysEntries();
+            } catch (error) {
+                console.error('Error saving entry:', error);
+                alert('Error saving entry: ' + error.message);
+            }
+        });
+        
+        // Initialize
+        loadTodaysEntries();
+    </script>
+</body>
+</html>
